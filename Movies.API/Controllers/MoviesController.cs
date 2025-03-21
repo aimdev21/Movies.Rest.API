@@ -20,14 +20,17 @@ public class MoviesController : ControllerBase
     {
         var movie = request.MapToMovie();
         await _movieRepository.CreateAsync(movie);
-		var movieResponse = movie.MapToResponse();
-        return CreatedAtAction(nameof(Get), new { id = movie.Id }, movieResponse);
+        return Ok(movie);
+        // return CreatedAtAction(nameof(Get), new { idOrSlag = movie.Id }, movie);
     }
 
     [HttpGet(ApiEndpoints.Movies.Get)]
-    public async Task<IActionResult> Get([FromRoute] Guid id)
+    public async Task<IActionResult> Get([FromRoute] string idOrSlug)
     {
-        var movie = await _movieRepository.GetByIdAsync(id);
+        var movie = Guid.TryParse(idOrSlug, out var id) 
+            ? await _movieRepository.GetByIdAsync(id) 
+            : await _movieRepository.GetBySlugAsync(idOrSlug);
+        
         if (movie is null)
         {
             return NotFound();
